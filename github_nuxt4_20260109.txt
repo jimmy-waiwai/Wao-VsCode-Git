@@ -1,0 +1,119 @@
+1. nuxt.config.tsでの出力先設定
+typescript*****************************
+
+// nuxt.config.ts
+export default defineNuxtConfig({
+  // ... 他の設定
+  nitro: {
+    // GitHub Pages (docsディレクトリ) に合わせる
+    output: {
+      dir: 'docs'
+    }
+  },
+  app: {
+    // ベースURL（リポジトリ名に合わせて変更）
+    // 例: username.github.io
+    baseURL: '/your-repo-name/'
+  }
+})
+
+**************************************************
+
+
+2. package.jsonでのデプロイコマンド（gh-pages利用）（いるのかな？）
+json***********************************************
+
+// package.json
+"scripts": {
+  "dev": "nuxt dev",
+  "build": "nuxt build",
+  "generate": "nuxt generate", // 静的ファイルを生成
+  "preview": "nuxt preview",
+  "deploy": "npm run generate && npx gh-pages -d docs -b gh-pages" // docsディレクトリからgh-pagesブランチへデプロイ
+},
+"devDependencies": {
+  "gh-pages": "^x.x.x" // バージョンは適宜更新
+}
+
+********************************************************
+
+3. GitHub Pagesの設定
+リポジトリのSettings > Pagesで、SourceをDeploy from a branch（gh-pagesブランチ）に変更し、/ (root)（またはdocsディレクトリ）を選択します。
+これで、npm run deployを実行するたびに、docsディレクトリの内容がgh-pagesブランチにデプロイされ、GitHub Pagesで公開されます。
+
+********************************************************
+********************************************************
+↓さらに詳しく聞いた方、こちらの方が良さそう。
+********************************************************
+
+Nuxt 4をGitHub Pagesにデプロイするには、Nuxt 4で標準となったGitHub Actionsを用いた自動ビルド・デプロイが最も効率的です。
+2026年時点の最新のNuxt 4では、nitroプリセットを使用することで、複雑な設定なしに静的サイトとして最適化されたビルドが可能です。
+
+1. nuxt.config.ts の設定
+カスタムドメインを使用せず、https://<ユーザー名>.github.io/<リポジトリ名>/ というURLで公開する場合は、リポジトリ名をベースURLとして設定する必要があります。 
+typescript*******************************************
+
+// nuxt.config.ts
+export default defineNuxtConfig({
+  // リポジトリ名を / で囲んで指定
+  app: {
+    baseURL: '/<repository-name>/'
+  },
+  // Nuxt 4 の機能（nitroなど）を最適化
+  nitro: {
+    preset: 'github_pages'
+  }
+})
+
+********************************************************
+
+2. GitHub Actions ワークフローの作成 
+リポジトリのルートに .github/workflows/deploy.yml を作成し、以下の内容を記述します。Nuxt 4は標準でNode.js 20以上を推奨しています。
+
+yaml******************************************************
+name: Deploy to GitHub Pages
+on:
+  push:
+    branches: [main]
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+      - run: npm install
+      # Nuxt 4のプリレンダリングを実行
+      - run: npx nuxt build --preset github_pages
+      - uses: actions/upload-pages-artifact@v3
+        with:
+          path: .output/public
+
+  deploy:
+    needs: build
+    runs-on: ubuntu-latest
+    permissions:
+      pages: write
+      id-token: write
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+    steps:
+      - id: deployment
+        uses: actions/deploy-pages@v4
+
+***********************************************************
+
+3. GitHub リポジトリの設定 
+GitHub上のリポジトリから Settings > Pages を開きます。
+Build and deployment > Source で 「GitHub Actions」 を選択します。
+ワークフローファイルをpushすると、自動的にビルドとデプロイが開始されます。 
+
+注意点
+Nuxt 4 のディレクトリ構造: Nuxt 4では app/ ディレクトリ配下にコードを配置する新しい構造が導入されていますが、ビルド結果は引き続き .output/ に生成されます。
+
+静的生成: GitHub Pagesは静的ホスティングであるため、サーバーサイドのみのロジック（APIなど）は動作しません。全ページをプリレンダリングする必要があります。
+
+
+***********************************************************

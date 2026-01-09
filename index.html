@@ -1,5 +1,77 @@
-<<<<<<< HEAD
-<p>こんにちは。2025年の久しぶりのコミットはできるかな。</p>
-=======
-<p>こんにちは。会社からブラウザで修正してみました。</p>
->>>>>>> e1ab8ba5b8e8d7194b1b26c7c7f0526469c35f0d
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Document</title>
+
+  
+  <style>
+    /* modal */
+    .modal {
+      position: fixed;
+      z-index: 999;
+      top: 20%;
+      left: 50%;
+      width: 300px;
+      margin-left: -150px;
+    }
+
+    /* Transition */
+    .fade-enter-active,
+    .fade-leave-active {
+      transition: all 0.3s ease-out;
+    }
+
+    .fade-enter-from,
+    .fade-leave-to {
+      transform: translateX(20px);
+      opacity: 0;
+    }
+
+  </style>
+</head>
+<body>
+  <div id="app" v-cloak>
+
+    <button @click="open = true">Open Modal</button>
+
+    <Teleport to="body">
+      <Transition name="fade">
+        <div v-if="open" class="modal">
+          <p>Hello from the modal!</p>
+          <button @click="open = false">Close</button>
+        </div>
+      </Transition>
+    </Teleport>
+
+    <button @click="show = !show">Toggle</button>
+
+    <Transition name="fade">
+      <p v-if="show">hello</p>
+    </Transition>
+    
+
+  </div><!-- id="app" v-cloak -->
+
+  <script type="module">
+    import { createApp, ref, onMounted, watch, computed } from 'https://unpkg.com/vue@3/dist/vue.esm-browser.js'/* テスト用 */
+    /* import { createApp } from 'https://unpkg.com/vue@3/dist/vue.esm-browser.prod.js' *//* 本番用 */
+
+    createApp({
+      setup() {
+        const open = ref(false)
+        const show = ref(false)
+
+
+        
+        return {
+          open,
+          show
+        }
+      }
+    }).mount('#app')
+  </script>
+  
+</body>
+</html>
